@@ -29,7 +29,7 @@ bool pop (struct TQueue *b, usigned char c)
 
 void imprime(struct TQueue *b){
     for(int i=0; i<7;i++){
-        
+
     }
 }
 
