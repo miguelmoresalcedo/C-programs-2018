@@ -13,13 +13,14 @@
     "EXAMPLE:\n" \
     "%s -d sharklaers.com -p"
 #define N 0x100 //veces
+#define mailmando "cat %s | telnet %s %s"
 
 const char *program_name; //esto se hace para que el programa quede mas limpio
 
 void
 print_usage (FILE *out, int status) //el FILE *out es el tubo por el que quiero que me lo pase
 {
-    fprintf ( out, USAGE, program_name ); //en este apartado vamos a hacer un "patron" para que la cadena siga un orden y se haga bien
+    fprintf ( out, USAGE(program_name )); //en este apartado vamos a hacer un "patron" para que la cadena siga un orden y se haga bien
     exit(status);
 }
 
@@ -27,19 +28,21 @@ print_usage (FILE *out, int status) //el FILE *out es el tubo por el que quiero 
 int
 main(int argc, char *argv[]){
 
-    char mailmando[N] = "cat %s | telnet %s %s"; //esto es lo que voy a querer mandar, los %s se ponen para que no tengamos que mandar siempre el mismo mensaje y pueda mandarse lo que quieras
+    char mailmando[N]; //esto es lo que voy a querer mandar, los %s se ponen para que no tengamos que mandar siempre el mismo mensaje y pueda mandarse lo que quieras
 
     //vamos a usar getopt por eso debemos de declarar las opciones cortas y las opciones largar que es lo que se hace a continuacion
-    int sig_opcion;
     const char *servidor = NULL;
-    char *puerto [N] = "smtp"; //es solo en caso de que me ponga el puerto
-    const char *op_cortas = "hd:p";
+    int sig_opcion;
+    char puerto[N] = "smtp" //esto solo es por si quieres poner el puerto
+
+    int verbose = 0; //para la opcion que hemos metido luego de verbose
+    const char *op_cortas = "hd:p:v";
 
     const struct option *op_largas[] = {
                {"help", 0, NULL, 'h'},
                {"domain", 1, NULL, 'd'},
                {"port", 1, NULL, 'p'},
-               {"verbose", 1, NULL, 'p'},
+               {"verbose", 0, NULL, 'v'}, //metemos el verbose en el menu de opciones largas
                {NULL, 0, NULL, '\0'}
     };
 
@@ -55,19 +58,18 @@ main(int argc, char *argv[]){
                 print usage(stdout, EXIT_SUCCESS);
                 break;
              case 'v': //crear la opcion verbose
-                 print usage(stdout, EXIT_SUCCESS);
+                 verbose = 1;
                  break;
             case 'd': //es solamente cuando tiene un argumento mas lo guarda aqui
                 servidor = optarg;
                 break;
             case 'p':
-                strcpy(puerto, optarg, N); //copiaria en puerto el puerto que se ha introducido en caso de que haya sido introducido
+                strncpy(puerto, optarg, N); //copiaria en puerto el puerto que se ha introducido en caso de que haya sido introducido
                 break;
             case '?'
                 print usage(stderr, EXIT_FAILURE);
-                NOMASOPC;
                 break;
-            case -1:
+            case NOMASOPC:
                 break;
             default:
                 abort();
@@ -81,6 +83,13 @@ main(int argc, char *argv[]){
         fprintf(stderr, "You have to specify a email server \ n");
         print_usage(stderr, EXIT_SUCCESS);
 
+    }
+        if (optind >= argc){
+            fprintf(stderr, "You have to specify an email file.\n");
+            print_usage(stderr, EXIT_FAILURE);
+        }
+
+
         sprintf(mailmado, mailmando,
                 argv[optind], //va analizando todo lo que empieza por - y te dice lo que hay despues
                 servidor,
@@ -88,8 +97,11 @@ main(int argc, char *argv[]){
 
        if (verbose)
            printf("Command: %s\n", mailmando);
+
     }
-    sprintf(mailmando, mailmando, "email.addr", "sharklasers.com", "smtp"); //con el primer mailmando cojo la cena y con el segundo mailmando escribo sobre la cadena mailmando lo que he puesto entre      comillas, cada %s es lo que hay entre comillas
+
+   /* sprintf(mailmando, mailmando, "email.addr", "sharklasers.com", "smtp"); //con el primer mailmando cojo la cena y con el segundo mailmando escribo sobre la cadena mailmando lo que he puesto entre      comillas, cada %s es lo que hay entre comillas
+   */
 
     system (mailmando);
 
